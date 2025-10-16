@@ -234,7 +234,7 @@ const Dashboard = () => {
         <div style={styles.headerContent}>
           <div>
             <h1 style={{...styles.gradientText, fontSize: '24px', fontWeight: 'bold', margin: 0}}>
-              Dashboard
+              JBI Dashboard
             </h1>
             <p style={{color: colors.textLight, margin: '4px 0 0 0', fontSize: '14px'}}>
               Welcome back! Here's your business overview.
