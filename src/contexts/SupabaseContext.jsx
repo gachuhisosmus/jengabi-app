@@ -7,8 +7,8 @@ import { createClient } from '@supabase/supabase-js'
 const SupabaseContext = createContext()
 
 // TODO: Replace with your actual Supabase project credentials
-const supabaseUrl = 'https://zdrzwjbquiufusjdqvwa.supabase.co' // Your actual Supabase URL
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpkcnp3amJxdWl1ZnVzamRxdndhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzgwNjYxNiwiZXhwIjoyMDczMzgyNjE2fQ.Dsz1ITCP2waqMU4__eP_NXosL9PQlow5IRRkAXFEVjo' // Your actual Supabase anon/public key
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL // Your actual Supabase URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY // Your actual Supabase anon/public key
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export const SupabaseProvider = ({ children }) => {

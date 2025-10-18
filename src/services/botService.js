@@ -3,7 +3,7 @@
 
 class BotService {
   constructor() {
-    this.baseURL = 'https://jengabi.onrender.com' // Your Flask bot URL
+    this.baseURL = import.meta.env.VITE_BOT_API_URL  // Your Flask bot URL
   }
 
   async generateMarketingIdeas(products, platform, businessContext, outputType = 'ideas') {
