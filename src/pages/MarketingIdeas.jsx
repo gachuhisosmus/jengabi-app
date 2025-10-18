@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useSupabase } from '../contexts/SupabaseContext'
+import botService from '../services/botService'
 import { 
   Zap, 
   Copy, 
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react'
 
 const MarketingIdeas = () => {
-  const { user } = useSupabase()
+  const { userProfile } = useSupabase()
   const [selectedProducts, setSelectedProducts] = useState([])
   const [selectedPlatform, setSelectedPlatform] = useState('instagram')
   const [ideas, setIdeas] = useState([])
@@ -21,18 +22,20 @@ const MarketingIdeas = () => {
   const [copiedIndex, setCopiedIndex] = useState(null)
 
   // Mock user products - will come from database
-  const userProducts = [
+  const userProducts = userProfile?.business_products || [
     'African Print Dresses',
     'Handmade Jewelry', 
     'Artisan Bags',
-    'Traditional Accessories'
+    'Traditional Accessories',
+    'Men Jeans wear',
+    'Men African Shirts'
   ]
 
   const platforms = [
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
     { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
     { id: 'tiktok', name: 'TikTok', icon: Clock, color: '#000000' },
-    { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2' }
+    { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1e648fff' }
   ]
 
   const styles = {
@@ -93,8 +96,35 @@ const MarketingIdeas = () => {
     
     setIsGenerating(true)
     
-    // Simulate API call to your existing bot
-    setTimeout(() => {
+    try {
+      const businessContext = {
+        business_name: userProfile?.business_name || 'My Business',
+        business_type: userProfile?.business_type || 'Small Business', 
+        business_location: userProfile?.business_location || 'Kenya',
+        business_products: userProfile?.business_products || selectedProducts
+      }
+
+      const data = await botService.generateMarketingIdeas(
+        selectedProducts, 
+        selectedPlatform, 
+        businessContext,
+        'ideas'
+      )
+      
+      const transformedIdeas = data.ideas?.map((idea, index) => ({
+        id: index + 1,
+        content: idea.content || idea.text || `Marketing idea for ${selectedProducts[0]}`,
+        platform: selectedPlatform,
+        type: idea.type || 'post',
+        engagement: idea.engagement || 'medium'
+      })) || []
+
+      setIdeas(transformedIdeas)
+      
+    } catch (error) {
+      console.error('AI Generation Error:', error)
+      
+      // Fallback to mock data if API fails
       const mockIdeas = [
         {
           id: 1,
@@ -119,8 +149,9 @@ const MarketingIdeas = () => {
         }
       ]
       setIdeas(mockIdeas)
+    } finally {
       setIsGenerating(false)
-    }, 2000)
+    }
   }
 
   const copyToClipboard = async (text, index) => {
