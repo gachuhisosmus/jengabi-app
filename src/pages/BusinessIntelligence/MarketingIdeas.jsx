@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { useSupabase } from '../contexts/SupabaseContext'
-import botService from '../services/botService'
+import React, { useEffect, useState } from 'react'
+import { useSupabase } from '../../contexts/SupabaseContext'
+import botService from '../../services/botService'
 import { 
   Zap, 
   Copy, 
@@ -15,6 +15,21 @@ import {
 
 const MarketingIdeas = () => {
   const { userProfile } = useSupabase()
+
+  useEffect(() => {
+    console.log('🔍 MARKETING IDEAS DEBUG:', {
+      hasUserProfile: !!userProfile,
+      products: userProfile?.products,
+      productsLength: userProfile?.products?.length,
+      businessName: userProfile?.business_name,
+      lastUpdated: userProfile?.updated_at,
+      fullProfile: userProfile
+    })
+  }, [userProfile])
+
+  console.log('📊 Marketing Ideas - Current userProfile:', userProfile)
+  console.log('📊 Marketing Ideas - Current products:', userProfile?.products)
+
   const [selectedProducts, setSelectedProducts] = useState([])
   const [selectedPlatform, setSelectedPlatform] = useState('instagram')
   const [ideas, setIdeas] = useState([])
@@ -22,7 +37,7 @@ const MarketingIdeas = () => {
   const [copiedIndex, setCopiedIndex] = useState(null)
 
   // Mock user products - will come from database
-  const userProducts = userProfile?.business_products || [
+  const userProducts = userProfile?.products || [
     'African Print Dresses',
     'Handmade Jewelry', 
     'Artisan Bags',
@@ -101,7 +116,7 @@ const MarketingIdeas = () => {
         business_name: userProfile?.business_name || 'My Business',
         business_type: userProfile?.business_type || 'Small Business', 
         business_location: userProfile?.business_location || 'Kenya',
-        business_products: userProfile?.business_products || selectedProducts
+        business_products: userProfile?.products || selectedProducts
       }
 
       const data = await botService.generateMarketingIdeas(

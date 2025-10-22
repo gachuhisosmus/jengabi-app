@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
+import { useSupabase } from '../contexts/SupabaseContext'
+import { analyticsService } from '../services/analyticsService'
 import { 
   TrendingUp, 
-  Users, 
+  Users,  // ✅ ADD THIS - it's missing!
   Eye, 
   Heart,
   MessageCircle,
@@ -16,11 +18,11 @@ import {
 } from 'lucide-react'
 
 const Analytics = () => {
-  const [timeRange, setTimeRange] = useState('7d') // 7d, 30d, 90d
+  const { user, supabase } = useSupabase()
+  const [timeRange, setTimeRange] = useState('7d')
   const [selectedMetric, setSelectedMetric] = useState('engagement')
   const [loading, setLoading] = useState(true)
 
-  // Professional color scheme
   const colors = {
     primary: '#3B82F6',
     primaryDark: '#1D4ED8',
@@ -77,49 +79,52 @@ const Analytics = () => {
     }
   }
 
-  // Mock analytics data
+  // Remove the mock data state and use this instead:
   const [analyticsData, setAnalyticsData] = useState({
-    overview: {
-      totalFollowers: 12540,
-      engagementRate: 4.2,
-      reach: 89432,
-      impressions: 156789
-    },
-    platformPerformance: [
-      { platform: 'instagram', followers: 8450, engagement: 5.2, growth: 12.5 },
-      { platform: 'facebook', followers: 3120, engagement: 3.1, growth: 8.2 },
-      { platform: 'tiktok', followers: 2870, engagement: 8.7, growth: 25.3 },
-      { platform: 'twitter', followers: 2100, engagement: 2.4, growth: 5.1 }
-    ],
-    growthData: [
-      { date: 'Jan 1', followers: 11800, engagement: 3.8 },
-      { date: 'Jan 2', followers: 11950, engagement: 4.1 },
-      { date: 'Jan 3', followers: 12100, engagement: 4.3 },
-      { date: 'Jan 4', followers: 12200, engagement: 4.0 },
-      { date: 'Jan 5', followers: 12350, engagement: 4.5 },
-      { date: 'Jan 6', followers: 12480, engagement: 4.7 },
-      { date: 'Jan 7', followers: 12540, engagement: 4.2 }
-    ],
-    contentPerformance: [
-      { type: 'Posts', count: 45, engagement: 3.8, reach: 67890 },
-      { type: 'Stories', count: 32, engagement: 5.2, reach: 45670 },
-      { type: 'Reels', count: 18, engagement: 12.4, reach: 123450 },
-      { type: 'Carousels', count: 12, engagement: 6.7, reach: 34560 }
-    ]
+    overview: { totalFollowers: 0, engagementRate: 0, reach: 0, impressions: 0 },
+    platformPerformance: [],
+    growthData: [],
+    contentPerformance: []
   })
 
   useEffect(() => {
-    // Simulate loading data
-    setTimeout(() => {
-      setLoading(false)
-    }, 1000)
-  }, [timeRange])
+    loadAnalyticsData()
+  }, [timeRange, user])
 
+  const loadAnalyticsData = async () => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const [overview, platformPerformance, growthData, contentPerformance] = await Promise.all([
+        analyticsService.getOverviewMetrics(user.id, timeRange),
+        analyticsService.getPlatformPerformance(user.id),
+        analyticsService.getGrowthData(user.id, timeRange),
+        analyticsService.getContentPerformance(user.id, timeRange)
+      ])
+
+      setAnalyticsData({
+        overview,
+        platformPerformance,
+        growthData,
+        contentPerformance
+      })
+    } catch (error) {
+      console.error('Error loading analytics data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Update your metricCards to use real data
   const metricCards = [
     {
       title: 'Total Followers',
       value: analyticsData.overview.totalFollowers.toLocaleString(),
-      change: '+12.5%',
+      change: '+12.5%', // We'll calculate this from real growth data later
       trend: 'up',
       icon: Users,
       color: colors.primary
@@ -149,6 +154,8 @@ const Analytics = () => {
       color: colors.error
     }
   ]
+
+  // Rest of your component remains exactly the same...
 
   const getPlatformIcon = (platform) => {
     const icons = {

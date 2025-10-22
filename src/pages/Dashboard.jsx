@@ -127,7 +127,7 @@ const Dashboard = () => {
       name: 'Pending Tasks',
       value: stats.pendingTasks,
       icon: FileText,
-      color: colors.primary,
+      color: colors.primaryDark,
       trend: '+2'
     },
     {
@@ -244,7 +244,7 @@ const Dashboard = () => {
             <div style={{
               width: '8px',
               height: '8px',
-              backgroundColor: '#10B981',
+              backgroundColor: '#0ddb97ff',
               borderRadius: '50%',
               animation: 'pulse 2s infinite'
             }}></div>
@@ -350,7 +350,7 @@ const Dashboard = () => {
                       transition: 'all 0.2s ease-in-out'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#F1F5F9'
+                      e.currentTarget.style.backgroundColor = '#61a9f1ff'
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = colors.background

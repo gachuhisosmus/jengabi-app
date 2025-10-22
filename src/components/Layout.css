@@ -1,0 +1,25 @@
+/* Layout.css */
+.desktop-sidebar {
+  display: none;
+  width: 280px;
+  flex-direction: column;
+  height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    display: flex;
+  }
+}
+
+.search-bar-container {
+  position: relative;
+  display: none;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .search-bar-container {
+    display: flex;
+  }
+}
