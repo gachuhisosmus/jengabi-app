@@ -8,23 +8,62 @@ const BusinessAnswers = () => {
   const [question, setQuestion] = useState('');
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!question.trim()) return;
 
     setLoading(true);
-    // TODO: Integrate with your QSTN bot command
-    setTimeout(() => {
-      setAnswers(prev => [{
-        id: Date.now(),
-        question,
-        answer: "This is where your QSTN bot AI will provide intelligent answers based on African business context...",
-        timestamp: new Date()
-      }, ...prev]);
-      setQuestion('');
+    setError('');
+    
+    try {
+      const API_BASE = 'https://jengabi.onrender.com'
+
+      console.log('🔄 Sending request to Business Answers API...');
+
+      const { user } = useSupabase(); // Make sure you're importing this
+      
+      const response = await fetch(`${API_BASE}/api/bot/business-answers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: question.trim(),
+          user_id: user.id  // ✅ CRITICAL: Send actual user ID
+        }),
+      });
+
+      console.log('📨 Response received:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('📊 API Response data:', data);
+      
+      if (data.success) {
+        // Add the real AI answer to the answers list
+        setAnswers(prev => [{
+          id: Date.now(),
+          question: question.trim(),
+          answer: data.data.answer,
+          timestamp: new Date()
+        }, ...prev]);
+        setQuestion('');
+        console.log('✅ Answer added successfully');
+      } else {
+        setError(data.message || 'Failed to get business advice');
+        console.error('❌ API returned error:', data.message);
+      }
+    } catch (err) {
+      setError(`Network error: ${err.message}. Please check if the bot server is running.`);
+      console.error('❌ Business Answers API error:', err);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -37,6 +76,13 @@ const BusinessAnswers = () => {
         <p style={styles.subtitle}>Ask any business question and get AI-powered answers</p>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div style={styles.errorContainer}>
+          <div style={styles.errorText}>❌ {error}</div>
+        </div>
+      )}
+
       {/* Question Input */}
       <form onSubmit={handleSubmit} style={styles.inputContainer}>
         <div style={styles.inputWrapper}>
@@ -45,12 +91,19 @@ const BusinessAnswers = () => {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask me anything about your business... (e.g., How to increase sales? Best pricing strategy?)"
-            style={styles.input}
+            style={{
+              ...styles.input,
+              borderColor: error ? '#EF4444' : '#D1D5DB'
+            }}
             disabled={loading}
           />
           <button 
             type="submit" 
-            style={styles.submitButton}
+            style={{
+              ...styles.submitButton,
+              backgroundColor: loading ? '#9CA3AF' : '#3B82F6',
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
             disabled={loading || !question.trim()}
           >
             {loading ? (
@@ -61,6 +114,14 @@ const BusinessAnswers = () => {
           </button>
         </div>
       </form>
+
+      {/* Loading Indicator */}
+      {loading && (
+        <div style={styles.loadingContainer}>
+          <Clock size={20} color="#3B82F6" />
+          <span style={styles.loadingText}>AI is analyzing your question...</span>
+        </div>
+      )}
 
       {/* Answers List */}
       <div style={styles.answersContainer}>
@@ -79,7 +140,7 @@ const BusinessAnswers = () => {
           </div>
         ))}
         
-        {answers.length === 0 && (
+        {answers.length === 0 && !loading && (
           <div style={styles.emptyState}>
             <Brain size={48} color="#D1D5DB" />
             <h3 style={styles.emptyTitle}>No questions yet</h3>
@@ -126,8 +187,20 @@ const styles = {
     color: '#6B7280',
     margin: 0
   },
+  errorContainer: {
+    backgroundColor: '#FEF2F2',
+    border: '1px solid #FECACA',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    marginBottom: '16px'
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
   inputContainer: {
-    marginBottom: '32px'
+    marginBottom: '24px'
   },
   inputWrapper: {
     display: 'flex',
@@ -142,18 +215,33 @@ const styles = {
     fontSize: '16px',
     outline: 'none',
     transition: 'border-color 0.2s ease',
+    ':focus': {
+      borderColor: '#3B82F6'
+    }
   },
   submitButton: {
     padding: '12px 16px',
-    backgroundColor: '#3B82F6',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
-    cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'background-color 0.2s ease',
+  },
+  loadingContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '12px 16px',
+    backgroundColor: '#EFF6FF',
+    border: '1px solid #DBEAFE',
+    borderRadius: '8px',
+    marginBottom: '16px'
+  },
+  loadingText: {
+    color: '#3B82F6',
+    fontSize: '14px'
   },
   answersContainer: {
     display: 'flex',
@@ -182,7 +270,8 @@ const styles = {
   answerText: {
     color: '#4B5563',
     lineHeight: '1.6',
-    margin: '0 0 8px 0'
+    margin: '0 0 8px 0',
+    whiteSpace: 'pre-wrap'
   },
   timestamp: {
     fontSize: '12px',
