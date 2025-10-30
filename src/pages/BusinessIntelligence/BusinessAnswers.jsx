@@ -18,11 +18,21 @@ const BusinessAnswers = () => {
     setError('');
     
     try {
-      const API_BASE = 'https://jengabi.onrender.com'
+      const API_BASE = 'https://jengabi.onrender.com';
 
       console.log('🔄 Sending request to Business Answers API...');
 
-      const { user } = useSupabase(); // Make sure you're importing this
+      // ✅ FIXED: Remove the duplicate useSupabase() call here
+      // The 'user' is already available from the component scope
+      
+      // ✅ ADD USER VALIDATION
+      if (!user || !user.id) {
+        setError('Please log in to use Business Answers');
+        setLoading(false);
+        return;
+      }
+
+      console.log('👤 Using user ID:', user.id);
       
       const response = await fetch(`${API_BASE}/api/bot/business-answers`, {
         method: 'POST',
@@ -31,7 +41,7 @@ const BusinessAnswers = () => {
         },
         body: JSON.stringify({
           question: question.trim(),
-          user_id: user.id  // ✅ CRITICAL: Send actual user ID
+          user_id: user.id  // ✅ CORRECT: Using user from component scope
         }),
       });
 
@@ -215,9 +225,6 @@ const styles = {
     fontSize: '16px',
     outline: 'none',
     transition: 'border-color 0.2s ease',
-    ':focus': {
-      borderColor: '#3B82F6'
-    }
   },
   submitButton: {
     padding: '12px 16px',
