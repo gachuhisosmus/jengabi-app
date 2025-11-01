@@ -11,70 +11,83 @@ const BusinessAnswers = () => {
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!question.trim()) return;
+  e.preventDefault();
+  if (!question.trim()) return;
 
-    setLoading(true);
-    setError('');
+  setLoading(true);
+  setError('');
+  
+  try {
+    const API_BASE = 'https://jengabi.onrender.com';
+
+    console.log('🔄 Sending request to Business Answers API...');
     
-    try {
-      const API_BASE = 'https://jengabi.onrender.com';
-
-      console.log('🔄 Sending request to Business Answers API...');
-
-      // ✅ FIXED: Remove the duplicate useSupabase() call here
-      // The 'user' is already available from the component scope
-      
-      // ✅ ADD USER VALIDATION
-      if (!user || !user.id) {
-        setError('Please log in to use Business Answers');
-        setLoading(false);
-        return;
-      }
-
-      console.log('👤 Using user ID:', user.id);
-      
-      const response = await fetch(`${API_BASE}/api/bot/business-answers`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question: question.trim(),
-          user_id: user.id  // ✅ CORRECT: Using user from component scope
-        }),
-      });
-
-      console.log('📨 Response received:', response.status);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('📊 API Response data:', data);
-      
-      if (data.success) {
-        // Add the real AI answer to the answers list
-        setAnswers(prev => [{
-          id: Date.now(),
-          question: question.trim(),
-          answer: data.data.answer,
-          timestamp: new Date()
-        }, ...prev]);
-        setQuestion('');
-        console.log('✅ Answer added successfully');
-      } else {
-        setError(data.message || 'Failed to get business advice');
-        console.error('❌ API returned error:', data.message);
-      }
-    } catch (err) {
-      setError(`Network error: ${err.message}. Please check if the bot server is running.`);
-      console.error('❌ Business Answers API error:', err);
-    } finally {
+    if (!user || !user.id) {
+      setError('Please log in to use Business Answers');
       setLoading(false);
+      return;
     }
-  };
+
+    console.log('👤 Using user ID:', user.id);
+    
+    const response = await fetch(`${API_BASE}/api/bot/business-answers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        question: question.trim(),
+        user_id: user.id
+      }),
+    });
+
+    console.log('📨 Response received:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('📊 API Response data:', data);
+    
+    // 🟢 FIXED: Handle different response formats
+    let answerText = '';
+    
+    if (data.answer) {
+      // Format 1: Direct answer
+      answerText = data.answer;
+    } else if (data.data && data.data.answer) {
+      // Format 2: Nested data.answer
+      answerText = data.data.answer;
+    } else if (data.success && data.data && data.data.answer) {
+      // Format 3: success wrapper + data.answer
+      answerText = data.data.answer;
+    } else if (data.message) {
+      // Format 4: Error message as response
+      answerText = data.message;
+    } else {
+      // Format 5: Fallback
+      answerText = JSON.stringify(data);
+    }
+    
+    // Add the answer to the answers list
+    setAnswers(prev => [{
+      id: Date.now(),
+      question: question.trim(),
+      answer: answerText,
+      timestamp: new Date()
+    }, ...prev]);
+    
+    setQuestion('');
+    console.log('✅ Answer added successfully');
+    
+  } catch (err) {
+    setError(`Network error: ${err.message}. Please check if the bot server is running.`);
+    console.error('❌ Business Answers API error:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={styles.container}>
