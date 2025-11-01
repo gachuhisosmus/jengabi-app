@@ -480,57 +480,70 @@ const Profile = () => {
   )
 
   const SocialMediaTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <label style={{ fontSize: '14px', fontWeight: '500', color: '#1F2937' }}>
-          Social Media Accounts
-        </label>
-        {completionStatus.social && <CheckCircle2 size={16} color="#10B981" />}
-      </div>
-      
-      {socialPlatforms.map((platform) => {
-        const Icon = platform.icon
-        return (
-          <div key={platform.key} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ 
-              width: '40px', 
-              height: '40px', 
-              borderRadius: '8px',
-              backgroundColor: platform.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white'
-            }}>
-              <Icon size={20} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1F2937' }}>
-                {platform.name}
-              </div>
-              <input
-                type="text"
-                defaultValue={socialAccountsRef.current[platform.key] || ''}
-                onChange={(e) => handleSocialAccountChange(platform.key, e.target.value)}
-                disabled={!isEditing}
-                placeholder={`Your ${platform.name} username`}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: `1px solid #D1D5DB`,
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  backgroundColor: isEditing ? 'white' : '#F9FAFB',
-                  marginTop: '4px'
-                }}
-              />
-            </div>
-          </div>
-        )
-      })}
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+      <label style={{ fontSize: '14px', fontWeight: '500', color: '#1F2937' }}>
+        Social Media Accounts
+      </label>
+      {completionStatus.social && <CheckCircle2 size={16} color="#10B981" />}
     </div>
-  )
+    
+    {socialPlatforms.map((platform) => {
+      const Icon = platform.icon
+      return (
+        <div key={platform.key} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            borderRadius: '8px',
+            backgroundColor: platform.color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white'
+          }}>
+            <Icon size={20} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1F2937' }}>
+              {platform.name}
+            </div>
+            <input
+              type="text"
+              defaultValue={socialAccountsRef.current[platform.key] || ''}
+              onChange={(e) => {
+                // 🟢 DIRECT UPDATE - No re-renders!
+                socialAccountsRef.current[platform.key] = e.target.value
+                // No forceUpdate call = no re-render = cursor stays active
+              }}
+              onBlur={() => {
+                // 🟢 Optional: Update completion status only when user leaves field
+                const hasSocialAccounts = Object.keys(socialAccountsRef.current).some(
+                  key => socialAccountsRef.current[key]?.trim()
+                )
+                if (hasSocialAccounts !== completionStatus.social) {
+                  forceUIUpdate() // Only re-render if completion status actually changed
+                }
+              }}
+              disabled={!isEditing}
+              placeholder={`Your ${platform.name} username`}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: `1px solid #D1D5DB`,
+                borderRadius: '6px',
+                fontSize: '14px',
+                outline: 'none',
+                backgroundColor: isEditing ? 'white' : '#F9FAFB',
+                marginTop: '4px'
+              }}
+            />
+          </div>
+        </div>
+      )
+    })}
+  </div>
+)
 
   const GoalsTab = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
