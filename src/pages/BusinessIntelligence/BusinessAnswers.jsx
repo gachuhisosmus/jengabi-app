@@ -92,59 +92,93 @@ const BusinessAnswers = () => {
   };
 
   const handleSalesSubmit = async (salesQuestion) => {
-    setLoading(true);
-    setError('');
+  setLoading(true);
+  setError('');
+  
+  try {
+    const API_BASE = 'https://jengabi.onrender.com';
     
-    try {
-      const API_BASE = 'https://jengabi.onrender.com';
-      
-      console.log('🔄 Sending sales request...');
-      
-      if (!user || !user.id) {
-        setError('Please log in to use Sales Advice');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(`${API_BASE}/api/bot/sales-advice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: salesQuestion,
-          user_id: user.id
-        }),
-      });
-
-      console.log('📨 Sales response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error(`Sales service error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('📊 Sales response data:', data);
-      
-      if (data.success) {
-        setAnswers(prev => [{
-          id: Date.now(),
-          question: salesQuestion,
-          answer: data.answer,
-          type: 'sales_advice',
-          actions: data.actions || [],
-          timestamp: new Date()
-        }, ...prev]);
-        
-        setQuestion('');
-      } else {
-        setError(data.error || 'Failed to get sales advice');
-      }
-    } catch (err) {
-      setError(`Sales advice temporarily unavailable: ${err.message}`);
-      console.error('❌ Sales Advice API error:', err);
-    } finally {
+    console.log('🔄 Sending sales emergency request...');
+    
+    if (!user || !user.id) {
+      setError('Please log in to use Sales Emergency Help');
       setLoading(false);
+      return;
     }
-  };
+
+    // 🆕 FIX: Use the same endpoint but with sales-focused questions
+    const response = await fetch(`${API_BASE}/api/bot/web-business-answers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: `URGENT SALES EMERGENCY: ${salesQuestion}. Need immediate action plan with specific steps, pricing strategies, and customer outreach tactics.`,
+        user_id: user.id
+      }),
+    });
+
+    console.log('📨 Sales emergency response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`Sales emergency service error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('📊 Sales emergency response data:', data);
+    
+    // 🆕 FIX: Handle the response format from web-business-answers
+    let answerText = '';
+    
+    if (data.data && data.data.answer) {
+      answerText = data.data.answer;
+    } else if (data.answer) {
+      answerText = data.answer;
+    } else {
+      answerText = 'Sales emergency advice generated successfully.';
+    }
+    
+    if (data.success) {
+      setAnswers(prev => [{
+        id: Date.now(),
+        question: salesQuestion,
+        answer: answerText,
+        type: 'sales_advice',
+        actions: extractSalesActions(answerText), // Extract actions from the answer
+        timestamp: new Date()
+      }, ...prev]);
+      
+      setQuestion('');
+    } else {
+      setError(data.error || 'Failed to get sales emergency help');
+    }
+  } catch (err) {
+    setError(`Sales emergency help temporarily unavailable: ${err.message}`);
+    console.error('❌ Sales Emergency API error:', err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Add this helper function near the top of your component
+const extractSalesActions = (answerText) => {
+  const actions = [];
+  const lines = answerText.split('\n');
+  
+  for (const line of lines) {
+    const cleanLine = line.trim();
+    // Look for action-oriented lines
+    if ((cleanLine.startsWith('•') || 
+         cleanLine.startsWith('-') || 
+         cleanLine.match(/^\d+\./) ||
+         cleanLine.includes('DO:') ||
+         cleanLine.includes('ACTION:') ||
+         cleanLine.includes('IMMEDIATE:')) && 
+        cleanLine.length > 10) {
+      actions.push(cleanLine);
+    }
+  }
+  
+  return actions.slice(0, 3); // Return max 3 actions
+};
 
   return (
     <div style={styles.container}>
