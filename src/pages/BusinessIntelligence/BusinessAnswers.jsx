@@ -106,12 +106,12 @@ const BusinessAnswers = () => {
       return;
     }
 
-    // 🆕 FIX: Use the same endpoint but with sales-focused questions
-    const response = await fetch(`${API_BASE}/api/bot/web-business-answers`, {
+    // 🆕 USE DEDICATED SALES EMERGENCY ENDPOINT
+    const response = await fetch(`${API_BASE}/api/bot/sales-emergency`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        question: `URGENT SALES EMERGENCY: ${salesQuestion}. Need immediate action plan with specific steps, pricing strategies, and customer outreach tactics.`,
+        question: salesQuestion,
         user_id: user.id
       }),
     });
@@ -125,24 +125,17 @@ const BusinessAnswers = () => {
     const data = await response.json();
     console.log('📊 Sales emergency response data:', data);
     
-    // 🆕 FIX: Handle the response format from web-business-answers
-    let answerText = '';
-    
-    if (data.data && data.data.answer) {
-      answerText = data.data.answer;
-    } else if (data.answer) {
-      answerText = data.answer;
-    } else {
-      answerText = 'Sales emergency advice generated successfully.';
-    }
-    
     if (data.success) {
       setAnswers(prev => [{
         id: Date.now(),
         question: salesQuestion,
-        answer: answerText,
-        type: 'sales_advice',
-        actions: extractSalesActions(answerText), // Extract actions from the answer
+        answer: data.data.answer,
+        type: 'sales_emergency',
+        personalized_for: data.data.personalized_for || 'Your Business',
+        business_type: data.data.business_type,
+        business_intelligence: data.data.business_intelligence,
+        profile_utilized: data.data.profile_utilized,
+        actions: extractSalesActions(data.data.answer),
         timestamp: new Date()
       }, ...prev]);
       
@@ -410,6 +403,26 @@ const styles = {
     color: '#6B7280',
     margin: 0
   },
+  intelligenceBadge: {
+    backgroundColor: '#10B981',
+    color: 'white',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '600',
+    marginBottom: '8px',
+    display: 'inline-block'
+  },
+  businessContext: {
+    backgroundColor: '#F3F4F6',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    marginBottom: '12px',
+    fontSize: '14px',
+    color: '#4B5563',
+    borderLeft: '3px solid #3B82F6'
+  },
+  
   // 🆕 TAB STYLES
   tabContainer: {
     display: 'flex',
